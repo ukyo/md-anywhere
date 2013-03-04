@@ -2,7 +2,9 @@ define(function(require, exports, module) {
 
 var $ = require('jquery'),
   EditSession = require('ace/edit_session').EditSession,
-  fs = require('fs');
+  fs = require('fs'),
+  oop = require('ace/lib/oop'),
+  Events = require('events');
 
 
 function Tab(fileEntry) {
@@ -11,10 +13,10 @@ function Tab(fileEntry) {
   isSaved = true;
   path = 'New file';
   self = this;
+  Tab.super_.constructor.call(this);
   
   this.fileEntry = fileEntry;
   this.session = null;
-  this.o = $({});
 
   Object.defineProperties(this, {
     isSaved: {
@@ -22,7 +24,7 @@ function Tab(fileEntry) {
       set: function(x) {
         if (x === isSaved) return;
         isSaved = x;
-        self.o.trigger('change:isSaved');
+        self.trigger('change:isSaved');
       }
     },
     path: {
@@ -30,42 +32,40 @@ function Tab(fileEntry) {
       set: function(x) {
         if (x === path) return;
         path = x;
-        self.o.trigger('change:path');
+        self.trigger('change:path');
       }
     }
   });
-};
-
-Tab.prototype.on = function(name, callback) {
-  this.o.on(name, callback);
 }
+oop.inherits(Tab, Events);
 
 Tab.prototype.init = function() {
-  var d = $.Deferred();
+  var d, self;
+
+  d = $.Deferred();
+  self = this;
 
   function initSession(text) {
-    this.session = new EditSession(text, 'ace/mode/markdown');
-    this.session.on('change', function(e) {
-      this.isSaved = false;
-      this.o.trigger('change:isSaved');
-    }.bind(this));
+    self.session = new EditSession(text, 'ace/mode/markdown');
+    self.session.on('change', function(e) {
+      self.isSaved = false;
+      self.trigger('change:isSaved');
+    });
   }
 
   if (!this.fileEntry) {
     setTimeout(function() {
-      initSession.call(this, '');
-      d.resolve(this);
-    }.bind(this), 0);
+      initSession('');
+      d.resolve(self);
+    }, 0);
   } else {
     fs.readAsText(this.fileEntry)
-    .then(initSession.bind(this))
-    .then(function() {
-      return fs.displayPath(this.fileEntry);
-    }.bind(this))
+    .then(initSession)
+    .then(fs.displayPath.bind(null, this.fileEntry))
     .then(function(path) {
-      this.path = path;
-      return this;
-    }.bind(this))
+      self.path = path;
+      return self;
+    })
     .then(d.resolve, d.reject);
   }
 
@@ -78,6 +78,7 @@ function TabView(tab) {
 
   isActived = false;
   self = this;
+  TabView.super_.constructor.call(this);
 
   Object.defineProperties(this, {
     isActived: {
@@ -94,7 +95,6 @@ function TabView(tab) {
     }
   });
 
-  this.o = $({});
   this.tab = tab;
   this.$tab = $('<div class="tab"><div class="filename"></div><div class="close">x</div></div>');
   this.$filename = this.$tab.find('.filename');
@@ -105,25 +105,25 @@ function TabView(tab) {
 
   this.$close.on('click', function(e) {
     this.$tab.remove();
-    this.o.trigger('click:close');
+    this.trigger('click:close');
   }.bind(this));
 
   this.$filename.on('click', function(e) {
-    this.o.trigger('click:filename', [this]);
+    this.trigger('click:filename', [this]);
   }.bind(this));
 
   this.updateFilename();
 }
+oop.inherits(TabView, Events);
 
 TabView.prototype.updateFilename = function() {
   this.$filename.text(this.path2FileName());
 }
 
 TabView.prototype.path2FileName = function() {
-  return this.tab.path.split('/').pop() + (this.tab.isSaved ? '' : '*');
+  var spliter = navigator.platform === 'Win32' ? '\\' : '/';
+  return this.tab.path.split(spliter).pop() + (this.tab.isSaved ? '' : '*');
 }
-
-TabView.prototype.on = Tab.prototype.on;
 
 
 exports.Tab = Tab;
