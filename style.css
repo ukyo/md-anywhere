@@ -29,7 +29,7 @@ article {
   color: rgb(223, 232, 255);
 }
 
-.tab.close {
+.tab .close:hover {
   cursor: pointer;
 }
 
