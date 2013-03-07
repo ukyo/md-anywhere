@@ -59,10 +59,12 @@ Tab.prototype.init = function() {
       d.resolve(self);
     }, 0);
   } else {
-    fs.readAsText(this.fileEntry)
-    .then(initSession)
-    .then(fs.displayPath.bind(null, this.fileEntry))
-    .then(function(path) {
+    $.when(
+      fs.readAsText(this.fileEntry),
+      fs.displayPath(this.fileEntry)
+    )
+    .then(function(text, path) {
+      initSession(text);
       self.path = path;
       return self;
     })
@@ -96,7 +98,7 @@ function TabView(tab) {
   });
 
   this.tab = tab;
-  this.$tab = $('<div class="tab"><div class="filename"></div><div class="close">x</div></div>');
+  this.$tab = $('<div class="tab"><div class="filename"></div><div class="close">✖</div></div>');
   this.$filename = this.$tab.find('.filename');
   this.$close = this.$tab.find('.close');
 
