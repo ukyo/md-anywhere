@@ -6,21 +6,35 @@ var fs = require('fs');
 var Tab = require('tab').Tab;
 var TabView = require('tab').TabView;
 var $ = require("jquery");
+var editor = ace.edit("editor");
+var shortcut = require('shortcut');
+var $tabs = $('#tabs');
+var log = console.log.bind(console);
 var env = {
   activeTab: null,
   tabs: [],
-  $tabs: $('#tabs'),
-  editor: ace.edit("editor")
+  options: require('defaultOptions')
 };
 
-$(window).on('resize', function() {
+
+$(window)
+.on('resize', function() {
   chrome.storage.local.set({
     width: window.innerWidth,
     height: window.innerHeight
-  }, function() {
-    
+  }, log);
+})
+.on('close', log);
+
+
+function init() {
+  chrome.storage.local.get(Object.keys(env.options), function(obj) {
+    $.extend(env.options, obj);
+    setOptions(env.options);
+    newTab();
   });
-});
+};
+
 
 // open a file to new tab.
 function newTab(fileEntry) {
@@ -32,15 +46,15 @@ function newTab(fileEntry) {
     setTitle(tab.path + (tab.isSaved ? '' : '*'));
   };
 
-  tab.on('change:isSaved', _setTitle);
-  tab.on('change:path', _setTitle);
+  tab
+  .on('change:isSaved', _setTitle)
+  .on('change:path', _setTitle);
   
   tabView.on('active', function() {
-    env.editor.setSession(tab.session);
-    setOptions(defaultOptions);
+    editor.setSession(tab.session);
+    setOptions(env.options);
     env.tabs.forEach(function(item) {
-      if (item.view === tabView) return;
-      item.view.isActived = false;
+      if (tabView !== item.view) item.view.isActived = false;
     });
     env.activeTab = tab;
     _setTitle();
@@ -48,15 +62,20 @@ function newTab(fileEntry) {
   
   tabView.on('click:close', function() {
     var index;
-    // lookup closed tab.
+    // lookup the tab.
     env.tabs.some(function(item, i) {
       index = i;
       return item.tab === tab;
     });
+
+    // remove the tab.
     env.tabs.splice(index, 1);
+    
+    // active the other tab or close the window.
     if (env.tabs.length) {
       env.tabs[0].view.isActived = true;
     } else {
+      env.activeTab = null;
       window.close();
     }
   });
@@ -72,7 +91,7 @@ function newTab(fileEntry) {
 
   promise = tab.init()
   .then(function(tab) {
-    env.$tabs.append(tabView.$tab);
+    $tabs.append(tabView.$tab);
     tabView.isActived = true;
     return tab;
   });
@@ -91,8 +110,8 @@ function openFile(fileEntry) {
       env.activeTab.fileEntry = fileEntry;
       promise = env.activeTab.init()
       .then(function(tab) {
-        env.editor.setSession(tab.session);
-        setOptions(defaultOptions);
+        editor.setSession(tab.session);
+        setOptions(env.options);
         return tab;
       });
     } else {
@@ -103,66 +122,60 @@ function openFile(fileEntry) {
   return promise;
 }
 
-
-function init() {
-  newTab();
-};
-
-
-var defaultOptions = {
-  theme: 'twilight',
-  font_size: 12,
-  show_invisibles: true,
-  display_indent_guides: false,
-  show_gutter: true,
-  use_wrap_mode: true,
-  tab_size: 4,
-  use_soft_tab: true,
-  highlight_active_line: true
-};
-
 function setOptions (options) {
   for (var key in options) {
     var value = options[key];
     env[key] = value;
     switch (key) {
       case 'theme':
-        env.editor.setTheme('ace/theme/' + value);
+        editor.setTheme('ace/theme/' + value);
         break;
       case 'font_size':
-        env.editor.setFontSize(value);
+        editor.setFontSize(value);
         break;
       case 'show_invisibles':
-        env.editor.setShowInvisibles(value);
+        editor.setShowInvisibles(value);
         break;
       case 'display_indent_guides':
-        env.editor.setDisplayIndentGuides(value);
+        editor.setDisplayIndentGuides(value);
         break;
       case 'show_gutter':
-        env.editor.renderer.setShowGutter(value);
+        editor.renderer.setShowGutter(value);
         break;
       case 'use_wrap_mode':
-        env.editor.getSession().setUseWrapMode(value);
+        editor.getSession().setUseWrapMode(value);
         break;
       case 'tab_size':
-        env.editor.getSession().setTabSize(value);
+        editor.getSession().setTabSize(value);
         break;
       case 'highlight_active_line':
-        env.editor.setHighlightActiveLine(value);
+        editor.setHighlightActiveLine(value);
         break;
       case 'use_soft_tab':
-        env.editor.getSession().setUseSoftTabs(value);
+        editor.getSession().setUseSoftTabs(value);
         break;
+      // case 'font_family':
+      //   document.getElementById('editor').style.fontFamily = value;
+      //   break;
     }
   }
 }
+
+chrome.storage.onChanged.addListener(function(changes) {
+  var o = {};
+  for (var k in changes) {
+    o[k] = changes[k].newValue;
+  }
+  $.extend(env.options, o);
+  setOptions(o);
+})
 
 function setTitle(text) {
   document.querySelector('title').textContent = text;
 }
 
-function save(editor) {
-  if(!env.activeTab.fileEntry) return saveAs(editor);
+function save() {
+  if(!env.activeTab.fileEntry) return saveAs();
 
   fs.save(env.activeTab.fileEntry, editor.getValue())
   .done(function() {
@@ -173,7 +186,7 @@ function save(editor) {
   });
 }
 
-function saveAs(editor) {
+function saveAs() {
   var isNewFile = !env.activeTab.fileEntry;
 
   fs.saveAs(editor.getValue())
@@ -192,49 +205,19 @@ function saveAs(editor) {
 
 fs.onDropFile('body', openFile);
 
-env.editor.commands.addCommand({
-  name: 'save',
-  bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
-  exec: save
+shortcut.add('Ctrl+S', save);
+shortcut.add('Ctrl+Shift+S', saveAs);
+shortcut.add('Ctrl+O', function() {
+  fs.choose({type: 'openFile'}).then(openFile);
 });
-
-env.editor.commands.addCommand({
-  name: 'save-as',
-  bindKey: {win: 'Ctrl-Shift-S', mac: 'Command-Shift-S'},
-  exec: saveAs
+shortcut.add('Ctrl+Shift+O', function() {
+  chrome.app.window.create('option.html', {
+    'width': 300,
+    'height': 280
+  });
 });
-
-env.editor.commands.addCommand({
-  name: 'open',
-  bindKey: {win: 'Ctrl-O', mac: 'Command-O'},
-  exec: function (editor) {
-    fs.choose({type: 'openFile'})
-    .then(openFile);
-  }
-});
-
-
-env.editor.commands.addCommand({
-  name: 'option',
-  bindKey: {win: 'Ctrl-Shift-O', mac: 'Command-Shift-O'},
-  exec: function (editor) {
-    // TODO
-  }
-});
-
-env.editor.commands.addCommand({
-  name: 'preview',
-  bindKey: {win: 'Ctrl-Shift-O', mac: 'Command-Shift-O'},
-  exec: function (editor) {
-    // TODO
-  }
-});
-
-env.editor.commands.addCommand({
-  name: 'new',
-  bindKey: {win: 'Ctrl-N', mac: 'Command-N'},
-  exec: newTab.bind(null, null)
-});
+shortcut.add('Ctrl+P', log);
+shortcut.add('Ctrl+N', newTab.bind(null, null));
 
 init();
 
