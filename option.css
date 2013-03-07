@@ -1,0 +1,25 @@
+html, body, article {
+  height: 100%;
+  background-color: #efefef;
+}
+
+article {
+  padding: 3px;
+  color: #333;
+}
+
+div {
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+label {
+  margin-right: 5px;
+}
+
+input[type=number] {
+  border: 1px solid #999;
+  padding: 1px;
+  background-color: #fdfdfd;
+  border-radius: 2px;
+}
