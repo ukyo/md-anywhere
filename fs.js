@@ -83,5 +83,5 @@ define(function(require, exports, module) {
     }
   };
 
-  $.extend(exports, fs);
+  return fs;
 });
