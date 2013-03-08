@@ -8,12 +8,16 @@ article {
   -webkit-box-orient: vertical;
 }
 
+.disabled {
+  display: none;
+}
+
 #tabs, .tab {
   display: -webkit-box;
   -webkit-box-orient: horizontal;
 }
 
-#editor, .tab, .filename {
+#editor, .tab, .filename, #preview {
   -webkit-box-flex: 1;
 }
 

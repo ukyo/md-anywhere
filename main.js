@@ -8,6 +8,7 @@ var TabView = require('tab').TabView;
 var $ = require("jquery");
 var editor = ace.edit("editor");
 var shortcut = require('shortcut');
+var markdown = require('markdown');
 var $tabs = $('#tabs');
 var log = console.log.bind(console);
 var env = {
@@ -216,7 +217,22 @@ shortcut.add('Ctrl+Shift+O', function() {
     'height': 280
   });
 });
-shortcut.add('Ctrl+P', log);
+shortcut.add('Ctrl+Alt+P', function() {
+  var $editor, $preview;
+
+  $editor = $('#editor');
+  $preview = $('#preview');
+
+  if ($preview.hasClass('disabled')) {
+    $editor.addClass('disabled');
+    $preview
+    .html(markdown.toHTML(editor.getValue()))
+    .removeClass('disabled');
+  } else {
+    $editor.removeClass('disabled');
+    $preview.addClass('disabled');
+  }
+});
 shortcut.add('Ctrl+N', newTab.bind(null, null));
 
 init();
