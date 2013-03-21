@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="css/font-awesome.css">
+    <link rel="stylesheet" type="text/css" href="normalize.css">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>untitled - md everywhere</title>
+  </head>
+  <body>
+    <article>
+      <div id="menu">
+        <ul id="controls">
+          <li id="button-close"><i class="icon-circle"></i>
+          <li id="button-minimize"><i class="icon-circle"></i>
+          <li id="button-maximize"><i class="icon-circle"></i>
+        </ul>
+        <ul id="file">
+          <li id="button-save" class="saved"><i class="icon-save"></i>
+          <li id="button-open"><i class="icon-file"></i>
+          <li id="button-preview"><i class="icon-desktop"></i>
+          <li id="button-jump" class="button-jump"><i class="icon-list button-jump"></i>
+        </ul>
+        <div id="info"></div>
+        <div id="button-option" class="button-option">
+          <i class="icon-cog button-option"></i>
+        </div>
+      </div>
+      <div id="editor"></div>
+      <div id="preview" class="disabled"></div>
+    </article>
+
+    <div id="jump" class="disabled"></div>
+
+    <div id="option" class="disabled">
+      <div>
+        <label for="theme">Theme</label>
+        <select id="theme">
+          <option>ambiance</option>
+          <option>chaos</option>
+          <option>chrome</option>
+          <option>clouds</option>
+          <option>clouds_midnight</option>
+          <option>cobalt</option>
+          <option>crimson_editor</option>
+          <option>dawn</option>
+          <option>dreamweaver</option>
+          <option>eclipse</option>
+          <option>github</option>
+          <option>idle_fingers</option>
+          <option>kr_theme</option>
+          <option>merbivore</option>
+          <option>merbivore_soft</option>
+          <option>mono_industrial</option>
+          <option>monokai</option>
+          <option>pastel_on_dark</option>
+          <option>solarized_dark</option>
+          <option>solarized_light</option>
+          <option>textmate</option>
+          <option>tomorrow</option>
+          <option>tomorrow_night</option>
+          <option>tomorrow_night_blue</option>
+          <option>tomorrow_night_bright</option>
+          <option>tomorrow_night_eighties</option>
+          <option>twilight</option>
+          <option>vibrant_ink</option>
+          <option>xcode</option>
+        </select>
+      </div>
+      <div><label for="font_size">Font Size</label><input type="number" id="font_size"></div>
+      <div><label for="tab_size">Tab Size</label><input type="number" id="tab_size"></div>
+      <div><label for="show_invisibles">Show Invisibles</label><input type="checkbox" id="show_invisibles"></div>
+      <div><label for="display_indent_guides">Display Indent Guides</label><input type="checkbox" id="display_indent_guides"></div>
+      <div><label for="show_gutter">Show Gutter</label><input type="checkbox" id="show_gutter"></div>
+      <div><label for="use_soft_tab">Use Soft Tab</label><input type="checkbox" id="use_soft_tab"></div>
+      <div><label for="use_wrap_mode">Soft Wrap</label><input type="checkbox" id="use_wrap_mode"></div>
+      <div><label for="highlight_active_line">Highlight Active Line</label><input type="checkbox" id="highlight_active_line"></div>
+    </div>
+
+    <div id="confirm" class="disabled">
+      <div id="confirm-box">
+        <div id="confirm-box-message"><i class="icon-warning-sign"></i> Not yet Saved. Do you save the file before closing?</div>
+        <div id="confirm-box-buttons">
+          <button id="confirm-button-close-without-saving">Close without Saving</button>
+          <button id="confirm-button-cancel">Cancel</button>
+          <button id="confirm-button-save-and-close">Save</button>
+        </div>
+      </div>
+    </div>
+
+  </body>
+  <script data-main="main" src="require.js"></script>
+</html>

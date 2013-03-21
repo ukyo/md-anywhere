@@ -1,7 +1,7 @@
 {
   "name": "md everywhere",
   "description": "We can write 'Markdown' texts everywhere.",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "app": {
     "background": {
       "scripts": ["background.js"]
