@@ -6,7 +6,7 @@ var UndoManager = require("ace/undomanager").UndoManager;
 var fs = require('fs');
 var st = require('st');
 var $ = require("jquery");
- editor = ace.edit("editor");
+var editor = ace.edit("editor");
 var shortcut = require('shortcut');
 var markdown = require('markdown');
 var log = console.log.bind(console);
@@ -43,7 +43,7 @@ Object.defineProperty(env, 'isSaved', {
     setTitle(env.path + (v ? '' : '*'));
     v ? $('#button-save').addClass('saved') : $('#button-save').removeClass('saved');
   }
-})
+});
 
 function init() {
   st.local.get(Object.keys(env.options))
@@ -76,9 +76,7 @@ function newFile() {
 
 // open a file.
 function openFile(fileEntry) {
-  var promise;
-
-  promise = $.when(
+  return $.when(
     fs.readAsText(fileEntry),
     fs.displayPath(fileEntry)
   )
@@ -93,8 +91,6 @@ function openFile(fileEntry) {
     setTitle(path);
     return fileEntry;
   });
-
-  return promise;
 }
 
 function setTitle(title) {
@@ -148,12 +144,12 @@ chrome.storage.onChanged.addListener(function(changes) {
   }
   $.extend(env.options, o);
   setOptions(o);
-})
+});
 
 function save() {
   if(!env.fileEntry) return saveAs();
 
-  fs.save(env.fileEntry, editor.getValue())
+  return fs.save(env.fileEntry, editor.getValue())
   .done(function() {
     env.isSaved = true;
   })
@@ -163,7 +159,7 @@ function save() {
 function saveAs() {
   var isNewFile = !env.fileEntry;
 
-  fs.saveAs(editor.getValue())
+  return fs.saveAs(editor.getValue())
   .then(function(fileEntry) {
     if (isNewFile) env.fileEntry = fileEntry;
     return fs.displayPath(fileEntry);
@@ -176,8 +172,7 @@ function saveAs() {
 }
 
 function open() {
-  fs.choose({type: 'openFile'})
-  .then(openFile);
+  return fs.choose({type: 'openFile'}).then(openFile);
 }
 
 function preview() {
@@ -198,7 +193,7 @@ function close() {
     }
   };
 
-  promise = $.when(
+  $.when(
     st.local.set(o),
     closePreview()
   )
@@ -207,10 +202,8 @@ function close() {
 
 function openPreview() {
   if (previewWindow) return;
-  
-  var promise;
 
-  promise = st.local.get('preview')
+  return st.local.get('preview')
   .then(function(obj) {
     var o = obj.preview || {};
     chrome.app.window.create('preview.html', {
@@ -231,17 +224,14 @@ function openPreview() {
       };
     });
   });
-
-  return promise;
 }
 
 function closePreview() {
   if (!previewWindow) return;
 
-  var w, promise;
+  var w = previewWindow.contentWindow;
 
-  w = previewWindow.contentWindow;
-  promise = st.local.set({
+  return st.local.set({
     preview: {
       left: w.screenX,
       top: w.screenY,
@@ -253,11 +243,9 @@ function closePreview() {
     previewWindow.close();
     previewWindow = null;
   });
-
-  return promise;
 }
 
-function getSections() {
+function getOutlines() {
   var lines, sections, i, n, sectionRe, sectionRe2, result;
 
   lines = editor.getValue().replace(/\r\n/g, '\n').split(/\n/);
@@ -283,8 +271,6 @@ function getSections() {
 
   return sections;
 }
-
-window.getSections = getSections;
 
 function confirmSave(callback) {
   return function() {
@@ -336,46 +322,44 @@ shortcut.add('Ctrl+O', confirmSave(open));
 shortcut.add('Ctrl+Alt+P', preview);
 shortcut.add('Ctrl+N', confirmSave(newFile));
 
-$('#button-save').on('click', save);
-$('#button-open').on('click', confirmSave(open));
-$('#button-preview').on('click', preview);
-$('#button-close').on('click', confirmSave(close));
-$('#button-minimize').on('click', function() {
+var $option = $('#option');
+var $jump = $('#jump');
+
+$(document)
+.on('click', '#button-save', save)
+.on('click', '#button-open', confirmSave(open))
+.on('click', '#button-preview', preview)
+.on('click', '#button-close', confirmSave(close))
+.on('click', '#button-minimize', function() {
   bg.appWindow.minimize();
-});
-$('#button-maximize').on('click', function() {
+})
+.on('click', '#button-maximize', function() {
   bg.appWindow.isMaximized() ?
     bg.appWindow.restore() :
     bg.appWindow.maximize();
-});
-var $option = $('#option');
-$('#button-option').on('click', function() {
+})
+.on('click', '#button-option', function() {
   $option.hasClass('disabled') ?
     $option.removeClass('disabled') :
     $option.addClass('disabled');
-});
-var $jump = $('#jump');
-$('#button-jump').on('click', function() {
-  var sections;
-
+})
+.on('click', '#button-jump', function() {
   if ($jump.hasClass('disabled')) {
     $jump.empty();
-
-    getSections().forEach(function(section){
-      var s, $section;
-      s = '<div class="level-' + section.level + '">' + section.text + '</div>';
-      $section = $(s).on('click', function() {
-        editor.gotoLine(section.line);
+    getOutlines().forEach(function(outline){
+      var s, $outline;
+      s = '<div class="level-' + outline.level + '">' + outline.text + '</div>';
+      $outline = $(s).on('click', function() {
+        editor.gotoLine(outline.line);
       });
-      $jump.append($section);
+      $jump.append($outline);
     });
-
     $jump.removeClass('disabled');
   } else {
     $jump.addClass('disabled');
   }
-});
-$('article').on('click', function(e) {
+})
+.on('click', 'article', function(e) {
   var $target = $(e.target);
   if ($target.hasClass('button-option')) {
     $jump.addClass('disabled');
